@@ -1,0 +1,123 @@
+---
+- name: Update Child Policies to disable "Header name with no header value"
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    bigiq: <bigiq_fqdn>
+    user: admin
+    password: <password>
+    stateOfHeadNoValue: false
+    childPoliciesDict: {}
+
+  tasks:
+  - name: GET - list of parent policies
+    uri:
+      url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/?$filter=type%20eq%20%27parent%27&$select=id,name"
+      method: GET
+      user: "{{user}}"
+      password: "{{password}}"
+      validate_certs: no
+    delegate_to: localhost
+    register: parentPolicies
+  
+  - name: Print result of get for parent policies
+    debug:
+      msg: "{{parentPolicies}}"
+      verbosity: 3
+
+  - name: Set_fact - create variable with parent policies id
+    set_fact: 
+      parentPolicyID: "{{ parentPolicies | json_query('json.items[0].id') }}"
+
+  - name: Print parent policy ID variable
+    debug:
+      msg: "{{ parentPolicyID }}"
+      verbosity: 3
+
+  - name: GET - list of child policies tied to parent policy
+    uri:
+      url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies?$filter=parentPolicyReference/id%20eq%20%27{{parentPolicyID}}%27&$expand=sectionReference"
+      method: GET
+      user: "{{user}}"
+      password: "{{password}}"
+      validate_certs: no
+    delegate_to: localhost
+    register: childPolicies
+
+  - name: Print results of GET for child policies
+    debug:
+      msg: "{{ childPolicies }}"
+      verbosity: 3
+
+  - name: Set_fact - set variable to number of childPolicies
+    set_fact:
+      numChildPolicies: "{{ childPolicies | json_query('json.items[] | length(@)') }}"
+
+  - name: Set_fact - Create dictionary with child policy name, policyID, and if http-protocol-compliance has been declined
+    set_fact:
+      childPoliciesDict: "{{  childPoliciesDict | combine({item: childPolicies | json_query(query_json)}) }}"
+    vars:
+      query_json: >
+        {"childName": json.items[{{item}}].name, "policyID": json.items[{{item}}].id,"httpProtocolCompliance": json.items[{{item}}].sectionReference.items[?childInheritanceStatus=='declined'&&name=='http-protocol-compliance'].childInheritanceStatus}
+    loop: "{{ range(0, (numChildPolicies | int)) |list }}"
+
+  - name: Print child policies dictionary 
+    debug:
+      msg: "{{ childPoliciesDict }}"
+      verbosity: 3
+
+  - name: GET - list of each child policy http-protocols sections to find "Header name with no header value" ID
+    uri:
+      url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/{{item.value.policyID}}/http-protocols"
+      method: GET
+      user: "{{user}}"
+      password: "{{password}}"
+      validate_certs: no
+    delegate_to: localhost
+    loop: "{{ childPoliciesDict|dict2items }}"
+    register: childPoliciesHttpsProtocols
+
+  - name: Print result of GET for http-protocols
+    debug:
+      msg: "{{ childPoliciesHttpsProtocols }}"
+      verbosity: 3
+  
+  - name: Set_fact - update child policy dictionary to include httpsID which is the id of "Header name with no header value"
+    set_fact:
+      childPoliciesDict: "{{  childPoliciesDict | combine({item.key: {\"childName\": item.value.childName,\"policyID\": item.value.policyID,\"httpProtocolCompliance\": item.value.httpProtocolCompliance,\"httpsID\": (childPoliciesHttpsProtocols | json_query(query_json))}}) }}"
+    vars:
+      query_json: >
+        results[{{item.key}}].json.items[?name=='Header name with no header value'].id
+    loop: "{{ childPoliciesDict|dict2items }}"
+
+  - name: Print child policies after merge
+    debug:
+      msg: "{{ childPoliciesDict }}"
+      verbosity: 3
+
+  - name: PATCH - to set "Header name with no header value" to either enable or disable
+    uri:
+      url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/{{item.value.policyID}}/http-protocols/{{item.value.httpsID[0]}}"
+      method: PATCH
+      user: "{{user}}"
+      password: "{{password}}"
+      validate_certs: no
+      body: 
+        enabled: "{{stateOfHeadNoValue}}"
+      body_format: json
+    delegate_to: localhost
+    loop: "{{ childPoliciesDict|dict2items }}"
+    register: childPoliciesPatch
+    when: item.value.httpProtocolCompliance != []
+
+  - name: print results of patch policies
+    debug:
+      msg: "{{ childPoliciesPatch }}"
+      #verbosity: 3
+
+  - name: Print child policies dict
+    debug:
+      msg: "{{ childPoliciesDict }}"
+      verbosity: 3
