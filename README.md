@@ -9,15 +9,15 @@ The logic and work flow for the ansible code is as follows:
         * Filter response to only include policies that are listed as a parent
         * Only provide the name and id of the parent policy in response
     * Using above information create a variable with id of parent policy
+* Identifying the setting for "Header name with no header value" in the parent policy, this sets the value to apply for the children who have declined inheritance for "HTTP Protocol Compliance"
+    * GET request to /mgmt/cm/asm/working-config/policies/{{parentPolicyID}}/http-protocols/4dafc3c8-1e91-39ba-a20d-46c47cffa34d?$select=enabled
+        * Filter response to return only the value of "enabled" for the "Header name with no header value" in the parent policy
+    * Using above information create a variable with the "enabled" value
 * Identify all child policies associated with parent above
-    * GET request to /mgmt/cm/asm/working-config/policies?$filter=parentPolicyReference/id eq '02f94b85-515b-3c73-a8d8-2cde271b10be'&$expand=sectionReference
+    * GET request to /mgmt/cm/asm/working-config/policies?$filter=parentPolicyReference/id eq '{{parentPolicyID}}'&$expand=sectionReference
         * Filter response to include only child policies that are associated with previously discovered parent
         * Expand the 'sectionReference' json blob to be able to determine if the child policy has declined the "HTTP Protocol Compliance" property
     * Using above information create a dictionary that includes Child Policy name, policy ID, and compliance declined status
-* Identify the id of the "Header name with no header value"
-    * GET request to /mgmt/cm/asm/working-config/policies/<child_policy_id>/http-protocols
-    * Using the response and a jsonFilter, find the json blob associated with "Header name with no header value", and get the associated id
-    * Using above information add the new id to the existing Child Policy dictionary which now includes: name, policy ID, compliance declined status, and the id for "Header name with no header value"
 * Submit a PATCH to turn-off checking for "Header name with no header value"
     * PATCH request to /mgmt/cm/asm/working-config/policies/<child_policy_id>/http-protocols/<Header_name_with_no_header_value_id>
     * patch body = {"enabled": false} 

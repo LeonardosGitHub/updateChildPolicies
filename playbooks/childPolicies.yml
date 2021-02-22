@@ -5,10 +5,10 @@
   gather_facts: no
 
   vars:
-    bigiq: <bigiq_fqdn>
+    bigiq: 4a58e8d5-dc81-48f4-8885-2a51ad7e2c00.access.udf.f5.com
     user: admin
-    password: <password>
-    stateOfHeadNoValue: false
+    password: purple123
+    #stateOfHeadNoValue: false
     childPoliciesDict: {}
 
   tasks:
@@ -35,6 +35,25 @@
     debug:
       msg: "{{ parentPolicyID }}"
       verbosity: 3
+  
+  - name: Get value of "Header name with no header value" on parent policy to set if it should be enabled|disabled(true|false)
+    uri:
+      url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/{{parentPolicyID}}/http-protocols/{{parentPolicyID}}?$select=enabled"
+      method: GET
+      user: "{{user}}"
+      password: "{{password}}"
+      validate_certs: no
+    delegate_to: localhost
+    register: parentPolicyHttps
+
+  - name: Print result of get for parent policies "Header name with no header value"
+    debug:
+      msg: "{{parentPolicyHttps}}"
+      verbosity: 3
+
+  - name: Set_fact - create variable to true|false based on parent policy value for "Header name with no header value"
+    set_fact: 
+      stateOfHeadNoValue: "{{ parentPolicyHttps | json_query('json.enabled') }}"
 
   - name: GET - list of child policies tied to parent policy
     uri:
@@ -68,38 +87,9 @@
       msg: "{{ childPoliciesDict }}"
       verbosity: 3
 
-  - name: GET - list of each child policy http-protocols sections to find "Header name with no header value" ID
-    uri:
-      url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/{{item.value.policyID}}/http-protocols"
-      method: GET
-      user: "{{user}}"
-      password: "{{password}}"
-      validate_certs: no
-    delegate_to: localhost
-    loop: "{{ childPoliciesDict|dict2items }}"
-    register: childPoliciesHttpsProtocols
-
-  - name: Print result of GET for http-protocols
-    debug:
-      msg: "{{ childPoliciesHttpsProtocols }}"
-      verbosity: 3
-  
-  - name: Set_fact - update child policy dictionary to include httpsID which is the id of "Header name with no header value"
-    set_fact:
-      childPoliciesDict: "{{  childPoliciesDict | combine({item.key: {\"childName\": item.value.childName,\"policyID\": item.value.policyID,\"httpProtocolCompliance\": item.value.httpProtocolCompliance,\"httpsID\": (childPoliciesHttpsProtocols | json_query(query_json))}}) }}"
-    vars:
-      query_json: >
-        results[{{item.key}}].json.items[?name=='Header name with no header value'].id
-    loop: "{{ childPoliciesDict|dict2items }}"
-
-  - name: Print child policies after merge
-    debug:
-      msg: "{{ childPoliciesDict }}"
-      verbosity: 3
-
   - name: PATCH - to set "Header name with no header value" to either enable or disable
     uri:
-      url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/{{item.value.policyID}}/http-protocols/{{item.value.httpsID[0]}}"
+      url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/{{item.value.policyID}}/http-protocols/4dafc3c8-1e91-39ba-a20d-46c47cffa34d"
       method: PATCH
       user: "{{user}}"
       password: "{{password}}"
@@ -111,11 +101,13 @@
     loop: "{{ childPoliciesDict|dict2items }}"
     register: childPoliciesPatch
     when: item.value.httpProtocolCompliance != []
+    # loop_control:
+    #   pause: 10
 
   - name: print results of patch policies
-    debug:
+    debug:  
       msg: "{{ childPoliciesPatch }}"
-      #verbosity: 3
+      verbosity: 3
 
   - name: Print child policies dict
     debug:
