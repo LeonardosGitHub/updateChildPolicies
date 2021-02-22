@@ -19,6 +19,6 @@ The logic and work flow for the ansible code is as follows:
         * Expand the 'sectionReference' json blob to be able to determine if the child policy has declined the "HTTP Protocol Compliance" property
     * Using above information create a dictionary that includes Child Policy name, policy ID, and compliance declined status
 * Submit a PATCH to turn-off checking for "Header name with no header value"
-    * PATCH request to /mgmt/cm/asm/working-config/policies/<child_policy_id>/http-protocols/<Header_name_with_no_header_value_id>
-    * patch body = {"enabled": false} 
+    * PATCH request to /mgmt/cm/asm/working-config/policies/{{item.value.policyID}}/http-protocols/4dafc3c8-1e91-39ba-a20d-46c47cffa34d
+    * patch body = {"enabled": {{ stateOfHeadNoValue }} } 
 
