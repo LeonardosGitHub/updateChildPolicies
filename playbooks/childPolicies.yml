@@ -5,7 +5,7 @@
   gather_facts: no
 
   vars:
-    bigiq: 10.155.152.77
+    bigiq: <bigiq>
     user: admin
     #password: admin
     #parentPolicy: <NameOfParentPolicy>
