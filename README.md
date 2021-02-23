@@ -8,7 +8,7 @@ The logic and work flow for the ansible code is as follows:
 * Provide name of parent policy as input to the playbook
 * Identifying the parent policy id and name
     * GET:
-        * /mgmt/cm/asm/working-config/policies/?$filter=name%20eq%20%27{{parentPolicy}}%27&$select=id,name
+        * /mgmt/cm/asm/working-config/policies/?$filter=name eq '{{parentPolicy}}'&$select=id,name
             * Filter response to only include policies that match name provided
             * Only provide the name and id of the parent policy in response
         * Using above information create a variable with id of parent policy
