@@ -1,9 +1,9 @@
-### The purpose of this repo is to provide a POC for updating child policies who have "declined" inheritence for HTTP compliance
+## The purpose of this repo is to provide a POC for updating child policies who have "declined" inheritence for HTTP compliance
 
 _This was tested on BIG-IQ version 7.1.0.2_
 
 
-#### The logic and work flow for the ansible code is as follows:
+### The logic and work flow for the ansible code is as follows:
 
 ##### Provide name of parent policy as input to the playbook
 
