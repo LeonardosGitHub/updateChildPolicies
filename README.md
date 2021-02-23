@@ -6,7 +6,8 @@ _This was tested on BIG-IQ version 7.1.0.2_
 The logic and work flow for the ansible code is as follows:
 
 Provide name of parent policy as input to the playbook
-Identifying the parent policy id and name
+
+Identifying the parent policy id
 * GET:
     * /mgmt/cm/asm/working-config/policies/?$filter=name eq '{{parentPolicy}}'&$select=id,name
         * Filter response to only include policies that match name provided
