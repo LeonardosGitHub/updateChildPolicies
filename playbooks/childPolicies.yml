@@ -17,7 +17,7 @@
       private: no
 
     - name: parentPolicy
-      prompt: "Copy and paste you're Parent Policy name here"
+      prompt: "Copy and paste your Parent Policy name here"
       private: no
     
 
