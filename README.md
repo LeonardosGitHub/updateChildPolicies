@@ -1,6 +1,6 @@
 ## The purpose of this repo is to provide a POC for updating child policies who have "declined" inheritence for HTTP compliance
 
-_This was tested on BIG-IQ version 7.1.0.2_
+_This was tested on BIG-IQ version 7.1.0.2 and Ansible version 2.9.4_
 
 
 ### The logic and work flow for the ansible code is as follows:
