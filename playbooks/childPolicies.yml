@@ -5,16 +5,14 @@
   gather_facts: no
 
   vars:
-    bigiq: <bigiq>
-    user: admin
-    #password: admin
-    #parentPolicy: <NameOfParentPolicy>
+    bigiq: <bigiq_ip_or_hostname>
+    user: <username>
     childPoliciesDict: {}
   
   vars_prompt:
     - name: password
       prompt: "Enter Password"
-      private: no
+      private: yes
 
     - name: parentPolicy
       prompt: "Copy and paste your Parent Policy name here"
@@ -22,7 +20,7 @@
     
 
   tasks:
-  - name: GET - list of parent policies
+  - name: GET - information of parent policy
     uri:
       url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/?$filter=name%20eq%20%27{{parentPolicy}}%27&$select=id,name"
       method: GET

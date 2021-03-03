@@ -17,7 +17,7 @@ _This was tested on BIG-IQ version 7.1.0.2_
 * Identifying the setting for "Header name with no header value" in the parent policy, this sets the value to apply for the children who have declined inheritance for "HTTP Protocol Compliance"
     * GET:
         * /mgmt/cm/asm/working-config/policies/{{parentPolicyID}}/http-protocols/4dafc3c8-1e91-39ba-a20d-46c47cffa34d?$select=enabled
-            * Filter response to return only the value of "enabled" for the "Header name with no header value" in the parent policy
+            * Filter response to return only the value of "enabled" (true|false) for the "Header name with no header value" in the parent policy
         * Using above information create a variable with the "enabled" value
 
 * Identify all child policies associated with parent above
