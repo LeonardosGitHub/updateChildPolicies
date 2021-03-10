@@ -7,6 +7,7 @@
   vars:
     bigiq: <bigiq_ip_or_hostname>
     user: <username>
+    loginProviderName: <nameOfLoginProvider>
     childPoliciesDict: {}
   
   vars_prompt:
@@ -17,16 +18,41 @@
     - name: parentPolicy
       prompt: "Copy and paste your Parent Policy name here"
       private: no
-    
 
   tasks:
+
+  - name: POST - BIG-IQ access token & refresh token
+    uri:
+      url: "https://{{bigiq}}/mgmt/shared/authn/login"
+      method: POST
+      body:
+        username: "{{user}}"
+        password: "{{password}}"
+        loginProviderName: "{{loginProviderName}}"
+      body_format: json
+      validate_certs: no
+    delegate_to: localhost
+    register: getBigiqTokens
+
+  - name: Print result of get tokens
+    debug:
+      msg: "{{getBigiqTokens}}"
+      verbosity: 1
+
+  - name: Set_fact - create variable with access token and refreshToken
+    set_fact:
+      bigiqTokens: "{{ getBigiqTokens | json_query(query_json) }}"
+    vars: 
+      query_json: >
+        {"accessToken": json.token.token, "refreshToken": json.refreshToken.token}
+
   - name: GET - information of parent policy
     uri:
       url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/?$filter=name%20eq%20%27{{parentPolicy}}%27&$select=id,name"
       method: GET
-      user: "{{user}}"
-      password: "{{password}}"
       validate_certs: no
+      headers:
+        X-F5-Auth-Token: "{{bigiqTokens.accessToken}}"
     delegate_to: localhost
     register: parentPolicies
   
@@ -48,9 +74,9 @@
     uri:
       url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/{{parentPolicyID}}/http-protocols/4dafc3c8-1e91-39ba-a20d-46c47cffa34d?$select=enabled"
       method: GET
-      user: "{{user}}"
-      password: "{{password}}"
       validate_certs: no
+      headers:
+        X-F5-Auth-Token: "{{bigiqTokens.accessToken}}"
     delegate_to: localhost
     register: parentPolicyHttps
 
@@ -67,9 +93,9 @@
     uri:
       url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies?$filter=parentPolicyReference/id%20eq%20%27{{parentPolicyID}}%27&$expand=sectionReference,httpProtocolsReference"
       method: GET
-      user: "{{user}}"
-      password: "{{password}}"
       validate_certs: no
+      headers:
+        X-F5-Auth-Token: "{{bigiqTokens.accessToken}}"
     delegate_to: localhost
     register: childPolicies
 
@@ -95,13 +121,37 @@
       msg: "{{ childPoliciesDict }}"
       verbosity: 1
 
+  - name: POST - BIG-IQ refresh token
+    uri:
+      url: "https://{{bigiq}}/mgmt/shared/authn/exchange"
+      method: POST
+      body:
+        refreshToken:
+          token: "{{bigiqTokens.refreshToken}}"
+      body_format: json
+      validate_certs: no
+    delegate_to: localhost
+    register: refreshBigiqTokens
+
+  - name: Print result of refresh tokens
+    debug:
+      msg: "{{getBigiqTokens}}"
+      verbosity: 1
+
+  - name: Set_fact - create variable with access token and refreshToken
+    set_fact:
+      bigiqTokens: "{{ getBigiqTokens | json_query(query_json) }}"
+    vars: 
+      query_json: >
+        {"accessToken": json.token.token, "refreshToken": json.refreshToken.token}
+
   - name: PATCH - to set "Header name with no header value" to either enable or disable
     uri:
       url: "https://{{bigiq}}/mgmt/cm/asm/working-config/policies/{{item.value.policyID}}/http-protocols/4dafc3c8-1e91-39ba-a20d-46c47cffa34d"
       method: PATCH
-      user: "{{user}}"
-      password: "{{password}}"
       validate_certs: no
+      headers:
+        X-F5-Auth-Token: "{{bigiqTokens.accessToken}}"
       body: 
         enabled: "{{stateOfHeadNoValue}}"
       body_format: json
