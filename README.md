@@ -4,10 +4,11 @@ _This was tested on BIG-IQ version 7.1.0.2 and Ansible version 2.9.4_
 
 ### The logic and work flow for the ansible code is as follows:
 
-* Update BIG-IQ target host variable
-* Update user variable
-* Update your login provider name. example "local"
-* Provide name of parent policy as input to the playbook
+* Add variables to playbook
+    * Update BIG-IQ target host variable
+    * Update user variable
+    * Update your login provider name. example "local"
+    * Provide name of parent policy as input to the playbook
 
 * Get access & refresh token from BIG-IQ, access token valid for 300 seconds, must use refresh token to extend the access token
 
