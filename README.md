@@ -2,10 +2,14 @@
 
 _This was tested on BIG-IQ version 7.1.0.2 and Ansible version 2.9.4_
 
-
 ### The logic and work flow for the ansible code is as follows:
 
+* Update BIG-IQ target host variable
+* Update user variable
+* Update your login provider name. example "local"
 * Provide name of parent policy as input to the playbook
+
+* Get access & refresh token from BIG-IQ, access token valid for 300 seconds, must use refresh token to extend the access token
 
 * Identifying the parent policy id
     * GET:
@@ -26,6 +30,8 @@ _This was tested on BIG-IQ version 7.1.0.2 and Ansible version 2.9.4_
             * Filter response to include only child policies that are associated with previously discovered parent
             * Expand the 'sectionReference' json blob to be able to determine if the child policy has declined the "HTTP Protocol Compliance" property
         * Using above information create a dictionary that includes Child Policy name, policy ID, enabled value of "Header name with no header value" and compliance declined status
+
+* Refresh token before Patch
 
 * Submit a PATCH to update enabled value for "Header name with no header value" to match parent policy setting
     * PATCH:
