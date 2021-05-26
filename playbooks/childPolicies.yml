@@ -120,6 +120,12 @@
     debug:
       msg: "{{ childPoliciesDict }}"
       verbosity: 1
+  
+  - name: Copy child policy dictionary to a local file as json
+    copy:
+      content: "{{ childPoliciesDict | to_nice_json }}"
+      dest: "childPolicies.json"
+    delegate_to: localhost
 
   - name: POST - BIG-IQ refresh token
     uri:

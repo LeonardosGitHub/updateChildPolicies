@@ -12,7 +12,9 @@ _This was tested on BIG-IQ version 7.1.0.2 and Ansible version 2.9.4_
 
 * Get access & refresh token from BIG-IQ, access token valid for 300 seconds, must use refresh token to extend the access token
 
-* This playbook will set the "Header with no header value" based on the current setting of the parent policy.
+* Parent Policy setting
+    * This playbook will set the "Header with no header value" based on the current setting of the parent policy.
+    * Verify the parent policy setting is set correctly, we will use this as the source of truth for updating the child policies.
 
 * Identifying the parent policy id
     * GET:
