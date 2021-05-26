@@ -121,14 +121,14 @@
       msg: "{{ childPoliciesDict }}"
       verbosity: 1
   
-  - name: Add mappings to /tmp/hosts
+  - name: Copy child policy dictionary to a local file as json using blockinfile module
     blockinfile:
       dest: "childPoliciesBlock.json"
       state: present
       create: yes
       block: "{{ childPoliciesDict | to_nice_json }}"
 
-  - name: Copy child policy dictionary to a local file as json
+  - name: Copy child policy dictionary to a local file as json using copy module
     copy:
       content: "{{ childPoliciesDict | to_nice_json }}"
       dest: "childPoliciesDict.json"
